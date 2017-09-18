@@ -4,6 +4,8 @@ import android.annotation.TargetApi
 import android.content.Context
 import android.content.SharedPreferences
 import android.os.Build
+import android.util.Base64
+import java.io.*
 
 
 /** SharedPreferences 工具类
@@ -119,14 +121,75 @@ class SharedPreferencesUtil private constructor() {
         return this
     }
 
-    fun putObject(key: String, value: Any): SharedPreferencesUtil {
-        return this
+    fun putObject(key: String, value: Any) {
+        val baos: ByteArrayOutputStream = ByteArrayOutputStream()
+        var out: ObjectOutputStream? = null
+        try {
+            out = ObjectOutputStream(baos)
+            out.writeObject(value)
+            val objectVal: String = String(Base64.encode(baos.toByteArray(), Base64.DEFAULT))
+            editor!!.putString(key, objectVal)
+            editor!!.commit()
+        } catch (e: IOException) {
+            e.printStackTrace()
+        } finally {
+            try {
+                baos.close()
+                if (out != null) {
+                    out.close()
+                }
+            } catch (e: IOException) {
+                e.printStackTrace()
+            }
+        }
     }
 
+    fun <T> getObject(key: String, clazz: Class<T>): T? {
+        if (prefs!!.contains(key)) {
+            val objectVal: String = prefs!!.getString(key, null)
+            val buffer: ByteArray = Base64.decode(objectVal, Base64.DEFAULT)
+            val bais: ByteArrayInputStream = ByteArrayInputStream(buffer)
+            var ois: ObjectInputStream? = null
+            try {
+                ois = ObjectInputStream(bais)
+                if (ois.readObject().javaClass.equals(clazz.javaClass)) {
+                    var t: T = ois.readObject() as T
+                    return t
+                }
+            } catch (e: StreamCorruptedException) {
+                e.printStackTrace()
+            } catch (e: IOException) {
+                e.printStackTrace()
+            } catch (e: ClassNotFoundException) {
+                e.printStackTrace()
+            } finally {
+                try {
+                    bais.close()
+                    if (ois != null) {
+                        ois.close()
+                    }
+                } catch (e: IOException) {
+                    e.printStackTrace()
+                }
+            }
+        }
+        return null
+    }
 
     fun commit() {
         editor!!.commit()
     }
 
+    fun remove(key: String): SharedPreferencesUtil {
+        editor!!.remove(key)
+        editor!!.commit()
+        return this
+    }
+
+    fun removeAll(): SharedPreferencesUtil {
+        editor!!.clear()
+        editor!!.commit()
+        return this
+    }
 
 }
