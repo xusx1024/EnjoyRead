@@ -1,5 +1,6 @@
 package com.xilin.enjoyread.utils
 
+import android.annotation.SuppressLint
 import android.annotation.TargetApi
 import android.content.Context
 import android.content.SharedPreferences
@@ -23,10 +24,12 @@ class SharedPreferencesUtil private constructor() {
     companion object {
         val instance: SharedPreferencesUtil by lazy { Holder.INSTANCE }
 
-        fun init(context: Context, prefersname: String, mode: Int) {
+        @SuppressLint("CommitPrefEdits")
+        private fun init(context: Context, prefersname: String, mode: Int) {
             instance.context = context
             instance.prefs = instance.context!!.getSharedPreferences(prefersname, mode)
             instance.editor = instance.prefs!!.edit()
+
         }
     }
 
@@ -144,7 +147,7 @@ class SharedPreferencesUtil private constructor() {
         }
     }
 
-    fun <T> getObject(key: String, clazz: Class<T>): T? {
+    fun <T> getObject(key: String): T? {
         if (prefs!!.contains(key)) {
             val objectVal: String = prefs!!.getString(key, null)
             val buffer: ByteArray = Base64.decode(objectVal, Base64.DEFAULT)
@@ -152,10 +155,9 @@ class SharedPreferencesUtil private constructor() {
             var ois: ObjectInputStream? = null
             try {
                 ois = ObjectInputStream(bais)
-                if (ois.readObject().javaClass.equals(clazz.javaClass)) {
-                    var t: T = ois.readObject() as T
-                    return t
-                }
+                @Suppress("UNCHECKED_CAST")
+                val t: T = ois.readObject() as T
+                return t
             } catch (e: StreamCorruptedException) {
                 e.printStackTrace()
             } catch (e: IOException) {
