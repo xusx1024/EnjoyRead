@@ -178,6 +178,8 @@ class SharedPreferencesUtil private constructor() {
         return null
     }
 
+
+
     fun commit() {
         editor!!.commit()
     }
