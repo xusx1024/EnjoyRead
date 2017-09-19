@@ -23,3 +23,4 @@ class CustomDialog @JvmOverloads constructor(context: Context, themeResId: Int =
     }
 
 }
+
